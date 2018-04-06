@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func TestGenerateMasterKeyAuthorizationSignature(t *testing.T) {
+func TestMasterKeyTokenProviderGenerateToken(t *testing.T) {
 	provider := MasterKeyTokenProvider{
 		Verb:         "GET",
 		ResourceType: "dbs",
@@ -18,10 +18,10 @@ func TestGenerateMasterKeyAuthorizationSignature(t *testing.T) {
 	signature, err := provider.GenerateToken()
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 
 	if signature != expected {
-		t.Errorf("\nSignature incorrect\ngot: %v\nexp: %v\n", signature, expected)
+		t.Errorf("Signature incorrect:\ngot: %v\nwant: %v\n", signature, expected)
 	}
 }
