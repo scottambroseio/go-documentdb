@@ -1,9 +1,9 @@
-package main
+package documentdb
 
 import "testing"
 
 func TestMasterKeyTokenProviderGenerateToken(t *testing.T) {
-	provider := MasterKeyTokenProvider{
+	provider := &MasterKeyTokenProvider{
 		Verb:         "GET",
 		ResourceType: "dbs",
 		ResourceLink: "dbs/ToDoList",
@@ -18,10 +18,10 @@ func TestMasterKeyTokenProviderGenerateToken(t *testing.T) {
 	signature, err := provider.GenerateToken()
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if signature != expected {
-		t.Errorf("Signature incorrect:\ngot: %v\nwant: %v\n", signature, expected)
+		t.Fatalf("Signature incorrect:\ngot: %v\nwant: %v\n", signature, expected)
 	}
 }

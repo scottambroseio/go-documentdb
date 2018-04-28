@@ -1,4 +1,4 @@
-package main
+package documentdb
 
 import (
 	"crypto/hmac"
@@ -9,10 +9,12 @@ import (
 	"strings"
 )
 
+// AuthorizationTokenProvider defines the interface needed for creating Cosmos DB authentication tokens
 type AuthorizationTokenProvider interface {
 	GenerateToken() (string, error)
 }
 
+// MasterKeyTokenProvider provides a type for creating master key authorization tokens
 type MasterKeyTokenProvider struct {
 	Verb         string
 	ResourceType string
@@ -23,11 +25,12 @@ type MasterKeyTokenProvider struct {
 	TokenVersion string
 }
 
-func (p MasterKeyTokenProvider) GenerateToken() (token string, err error) {
+// GenerateToken generates the master key authorization token for authenticating with the Cosmos DB REST API
+func (p *MasterKeyTokenProvider) GenerateToken() (string, error) {
 	decoded, err := base64.StdEncoding.DecodeString(p.Key)
 
 	if err != nil {
-		return
+		return "", err
 	}
 
 	mac := hmac.New(sha256.New, decoded)
@@ -37,6 +40,6 @@ func (p MasterKeyTokenProvider) GenerateToken() (token string, err error) {
 
 	sig := base64.StdEncoding.EncodeToString(hashPayload)
 	encoded := fmt.Sprintf("type=%v&ver=%v&sig=%v", p.KeyType, p.TokenVersion, sig)
-	token = url.QueryEscape(encoded)
-	return
+
+	return url.QueryEscape(encoded), nil
 }
