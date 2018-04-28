@@ -5,6 +5,7 @@ import "strings"
 import "time"
 import "net/http"
 import "io/ioutil"
+import "encoding/json"
 
 type documentDBClient struct {
 	*http.Client
@@ -25,11 +26,11 @@ func currentRFC1123FormattedDate(t time.Time) string {
 
 }
 
-func (client *documentDBClient) DeleteDatabase(id string) (string, error) {
+func (client *documentDBClient) DeleteDatabase(id string) error {
 	url := fmt.Sprintf("%v/dbs/%v", client.url, id)
 	date := currentRFC1123FormattedDate(time.Now())
 
-	provider := MasterKeyTokenProvider{
+	provider := &MasterKeyTokenProvider{
 		Verb:         "DELETE",
 		ResourceType: "dbs",
 		ResourceLink: fmt.Sprintf("dbs/%v", id),
@@ -42,13 +43,13 @@ func (client *documentDBClient) DeleteDatabase(id string) (string, error) {
 	signature, err := provider.GenerateToken()
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	req, err := http.NewRequest("DELETE", url, nil)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	req.Header.Set("Authorization", signature)
@@ -58,18 +59,11 @@ func (client *documentDBClient) DeleteDatabase(id string) (string, error) {
 	res, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	defer res.Body.Close()
-
-	bytes, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(bytes), nil
+	res.Body.Close()
+	return nil
 }
 
 func (client *documentDBClient) CreateDatabase(id string) (string, error) {
@@ -120,7 +114,62 @@ func (client *documentDBClient) CreateDatabase(id string) (string, error) {
 	return string(bytes), nil
 }
 
-func (client *documentDBClient) GetDatabases() (string, error) {
+func (client *documentDBClient) GetDatabase(id string) (*Database, error) {
+	url := fmt.Sprintf("%v/dbs/%v", client.url, id)
+	date := currentRFC1123FormattedDate(time.Now())
+
+	provider := MasterKeyTokenProvider{
+		Verb:         "GET",
+		ResourceType: "dbs",
+		ResourceLink: fmt.Sprintf("dbs/%v", id),
+		Date:         date,
+		Key:          client.key,
+		KeyType:      "master",
+		TokenVersion: "1.0",
+	}
+
+	signature, err := provider.GenerateToken()
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", signature)
+	req.Header.Set("x-ms-date", date)
+	req.Header.Set("x-ms-version", "2015-08-06")
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	bytes, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Database{}
+
+	err = json.Unmarshal(bytes, resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (client *documentDBClient) ListDatabases() (string, error) {
 	url := fmt.Sprintf("%v/dbs", client.url)
 	date := currentRFC1123FormattedDate(time.Now())
 
