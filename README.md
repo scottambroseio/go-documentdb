@@ -1,4 +1,4 @@
-# go-documentdb
+# go-documentdb [![Build Status](https://travis-ci.org/scottrangerio/go-documentdb.svg?branch=master)](https://travis-ci.org/scottrangerio/go-documentdb)
 
 A Document DB Client for Go
 
